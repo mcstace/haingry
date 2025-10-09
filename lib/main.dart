@@ -7,12 +7,16 @@ import 'dart:io';
 import 'dart:math';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Add this to pubspec.yaml
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Initialize cameras
   final cameras = await availableCameras();
+  
+  // Load saved recipes on app start
+  await UserPreferences.loadSavedRecipes();
   
   runApp(HaingryApp(cameras: cameras));
 }
@@ -37,12 +41,76 @@ class HaingryApp extends StatelessWidget {
   }
 }
 
-// Global user preferences
+// Global user preferences with persistent storage
 class UserPreferences {
   static String cookingStyle = '';
   static String timePreference = '';
   static List<Recipe> savedRecipes = [];
-  static XFile? lastFridgeImage; // Store the last captured image
+  static XFile? lastFridgeImage;
+
+  // Save recipes to persistent storage
+  static Future<void> saveSavedRecipes() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final List<String> recipesJson = savedRecipes.map((recipe) => jsonEncode({
+        'name': recipe.name,
+        'rating': recipe.rating,
+        'time': recipe.time,
+        'difficulty': recipe.difficulty,
+        'ingredients': recipe.ingredients,
+        'description': recipe.description,
+        'instructions': recipe.instructions,
+        'imageUrl': recipe.imageUrl,
+      })).toList();
+      await prefs.setStringList('saved_recipes', recipesJson);
+      print('Saved ${savedRecipes.length} recipes to storage');
+    } catch (e) {
+      print('Error saving recipes: $e');
+    }
+  }
+
+  // Load recipes from persistent storage
+  static Future<void> loadSavedRecipes() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final List<String>? recipesJson = prefs.getStringList('saved_recipes');
+      
+      if (recipesJson != null) {
+        savedRecipes = recipesJson.map((recipeString) {
+          final Map<String, dynamic> recipeData = jsonDecode(recipeString);
+          return Recipe(
+            name: recipeData['name'],
+            rating: (recipeData['rating'] as num).toDouble(),
+            time: recipeData['time'],
+            difficulty: recipeData['difficulty'],
+            ingredients: List<String>.from(recipeData['ingredients']),
+            description: recipeData['description'],
+            instructions: List<String>.from(recipeData['instructions']),
+            imageUrl: recipeData['imageUrl'] ?? '',
+          );
+        }).toList();
+        print('Loaded ${savedRecipes.length} recipes from storage');
+      }
+    } catch (e) {
+      print('Error loading recipes: $e');
+      savedRecipes = []; // Reset to empty list if loading fails
+    }
+  }
+
+  // Add/remove recipe and save to storage
+  static Future<void> toggleSaveRecipe(Recipe recipe) async {
+    if (savedRecipes.any((r) => r.name == recipe.name)) {
+      savedRecipes.removeWhere((r) => r.name == recipe.name);
+    } else {
+      savedRecipes.add(recipe);
+    }
+    await saveSavedRecipes();
+  }
+
+  // Check if recipe is saved
+  static bool isRecipeSaved(Recipe recipe) {
+    return savedRecipes.any((r) => r.name == recipe.name);
+  }
 }
 
 // Cooking Style Selection Screen
@@ -60,25 +128,63 @@ class CookingStyleScreen extends StatelessWidget {
           padding: const EdgeInsets.all(24.0),
           child: Column(
             children: [
-              const SizedBox(height: 60),
-              // Logo
-              SizedBox(
-                height: 60,
-                child: Image.asset(
-                  'assets/images/haingry_purple.jpg',
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Text(
-                      'haingry',
-                      style: TextStyle(
-                        fontSize: 56,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF7B68EE),
-                        letterSpacing: -1,
+              const SizedBox(height: 40),
+              // Logo and Bookmark Button Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const SizedBox(width: 50), // Spacer for centering logo
+                  Expanded(
+                    child: Center(
+                      child: SizedBox(
+                        height: 60,
+                        child: Image.asset(
+                          'assets/images/haingrypurple.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Text(
+                              'haingry',
+                              style: TextStyle(
+                                fontSize: 56,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF7B68EE),
+                                letterSpacing: -1,
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  ),
+                  // Bookmark Button
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SavedRecipesScreen(cameras: cameras),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF7B68EE).withOpacity(0.1),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFF7B68EE),
+                          width: 2,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.bookmark,
+                        color: Color(0xFF7B68EE),
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               
               const Spacer(),
@@ -100,7 +206,7 @@ class CookingStyleScreen extends StatelessWidget {
               // Cooking Style Buttons
               _buildStyleButton(
                 context,
-                'CAVEMAN-LEVEL EASY',
+                'CAVEMAN-LEVEL EASY🪨',
                 'easy',
               ),
               
@@ -108,7 +214,7 @@ class CookingStyleScreen extends StatelessWidget {
               
               _buildStyleButton(
                 context,
-                'A LITTLE FLAIR, MAYBE',
+                'A LITTLE FLAIR✨',
                 'medium',
               ),
               
@@ -116,7 +222,7 @@ class CookingStyleScreen extends StatelessWidget {
               
               _buildStyleButton(
                 context,
-                'MASTERCHEF STYLE',
+                'MASTERCHEF STYLE👨‍🍳',
                 'hard',
               ),
               
@@ -183,7 +289,7 @@ class TimePreferenceScreen extends StatelessWidget {
               SizedBox(
                 height: 60,
                 child: Image.asset(
-                  'assets/images/haingry_purple.jpg',
+                  'assets/images/haingrypurple.png',
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
                     return const Text(
@@ -226,7 +332,7 @@ class TimePreferenceScreen extends StatelessWidget {
               
               _buildTimeButton(
                 context,
-                'IN A BIT, I CAN WAIT',
+                'IN A BIT, I CAN WAIT⏱️',
                 'longer',
               ),
               
@@ -300,7 +406,7 @@ class _FridgePhotoScreenState extends State<FridgePhotoScreen> {
               SizedBox(
                 height: 60,
                 child: Image.asset(
-                  'assets/images/haingry_purple.jpg',
+                  'assets/images/haingrypurple.png',
                   fit: BoxFit.contain,
                   errorBuilder: (context, error, stackTrace) {
                     return const Text(
@@ -438,11 +544,11 @@ class _FridgePhotoScreenState extends State<FridgePhotoScreen> {
     // Store the image for analysis
     UserPreferences.lastFridgeImage = image;
     
-    // Navigate to recipes screen
+    // Navigate to ingredients confirmation screen first
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => RecipesScreen(cameras: widget.cameras),
+        builder: (context) => IngredientsConfirmationScreen(cameras: widget.cameras),
       ),
     );
   }
@@ -463,6 +569,371 @@ class _FridgePhotoScreenState extends State<FridgePhotoScreen> {
         );
       },
     );
+  }
+}
+
+// NEW: Ingredients Confirmation Screen
+class IngredientsConfirmationScreen extends StatefulWidget {
+  final List<CameraDescription> cameras;
+  
+  const IngredientsConfirmationScreen({super.key, required this.cameras});
+
+  @override
+  _IngredientsConfirmationScreenState createState() => _IngredientsConfirmationScreenState();
+}
+
+class _IngredientsConfirmationScreenState extends State<IngredientsConfirmationScreen> {
+  List<String> _detectedIngredients = [];
+  List<String> _additionalIngredients = [];
+  final TextEditingController _ingredientController = TextEditingController();
+  bool _isAnalyzing = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _analyzeIngredients();
+  }
+
+  Future<void> _analyzeIngredients() async {
+    try {
+      List<String> detectedIngredients = [];
+      
+      if (UserPreferences.lastFridgeImage != null) {
+        print('Analyzing fridge image with AI...');
+        detectedIngredients = await RecipeGenerator.analyzeImageForIngredients(UserPreferences.lastFridgeImage!);
+      } else {
+        print('No fridge image available, using fallback ingredients');
+        detectedIngredients = RecipeGenerator._getFallbackIngredients();
+      }
+      
+      setState(() {
+        _detectedIngredients = detectedIngredients;
+        _isAnalyzing = false;
+      });
+    } catch (e) {
+      print('Error analyzing ingredients: $e');
+      setState(() {
+        _detectedIngredients = RecipeGenerator._getFallbackIngredients();
+        _isAnalyzing = false;
+      });
+    }
+  }
+
+  void _addIngredient() {
+    String ingredient = _ingredientController.text.trim();
+    if (ingredient.isNotEmpty && !_additionalIngredients.contains(ingredient.toLowerCase())) {
+      setState(() {
+        _additionalIngredients.add(ingredient);
+        _ingredientController.clear();
+      });
+    }
+  }
+
+  void _removeAdditionalIngredient(String ingredient) {
+    setState(() {
+      _additionalIngredients.remove(ingredient);
+    });
+  }
+
+  void _removeDetectedIngredient(String ingredient) {
+    setState(() {
+      _detectedIngredients.remove(ingredient);
+    });
+  }
+
+  void _generateRecipes() {
+    List<String> allIngredients = [..._detectedIngredients, ..._additionalIngredients];
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RecipesScreen(
+          cameras: widget.cameras,
+          ingredients: allIngredients,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: SizedBox(
+          height: 40,
+          child: Image.asset(
+            'assets/images/haingrypurple.png',
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              return const Text(
+                'haingry',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF7B68EE),
+                ),
+              );
+            },
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: _isAnalyzing
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    color: Color(0xFF7B68EE),
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    'Analyzing your fridge contents...',
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                ],
+              ),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  const Text(
+                    'Ingredients Found',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 8),
+                  
+                  const Text(
+                    'We detected these ingredients in your fridge. Tap any to remove, or add more below.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
+                      height: 1.3,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Detected Ingredients
+                  if (_detectedIngredients.isNotEmpty) ...[
+                    const Text(
+                      'Detected from your fridge:',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _detectedIngredients.map((ingredient) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF7B68EE).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFF7B68EE),
+                              width: 1,
+                            ),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(20),
+                              onTap: () => _removeDetectedIngredient(ingredient),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      ingredient,
+                                      style: const TextStyle(
+                                        color: Color(0xFF7B68EE),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.close,
+                                      size: 16,
+                                      color: Color(0xFF7B68EE),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                  
+                  // Add More Ingredients Section
+                  const Text(
+                    'Add more ingredients:',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // Input Field
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _ingredientController,
+                          decoration: InputDecoration(
+                            hintText: 'Enter ingredient (e.g., salt, olive oil, spices...)',
+                            hintStyle: TextStyle(color: Colors.grey[400]),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: Color(0xFF7B68EE)),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                          onSubmitted: (_) => _addIngredient(),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF7B68EE),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          onPressed: _addIngredient,
+                          icon: const Icon(Icons.add, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Additional Ingredients Display
+                  if (_additionalIngredients.isNotEmpty) ...[
+                    const Text(
+                      'Added by you:',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _additionalIngredients.map((ingredient) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.green,
+                              width: 1,
+                            ),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(20),
+                              onTap: () => _removeAdditionalIngredient(ingredient),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      ingredient,
+                                      style: const TextStyle(
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.close,
+                                      size: 16,
+                                      color: Colors.green,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                  
+                  // Generate Recipes Button
+                  if (_detectedIngredients.isNotEmpty || _additionalIngredients.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _generateRecipes,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF7B68EE),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'Generate Recipes (${_detectedIngredients.length + _additionalIngredients.length} ingredients)',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ingredientController.dispose();
+    super.dispose();
   }
 }
 
@@ -568,6 +1039,9 @@ Requirements:
 - Difficulty: $difficulty
 - Use as many of the provided ingredients as possible
 - Include common pantry staples (salt, pepper, oil, etc.) as needed
+- CRITICAL: All ingredients must have EXACT measurements (cups, tablespoons, teaspoons, ounces, pounds, etc.)
+- CRITICAL: All instructions must include specific cooking times, temperatures, and detailed techniques
+- Instructions should be detailed enough that a beginner could follow them successfully
 
 Return EXACTLY this JSON format with no other text:
 {
@@ -577,9 +1051,17 @@ Return EXACTLY this JSON format with no other text:
       "rating": 4.5,
       "time": "25 MIN",
       "difficulty": "$difficulty",
-      "ingredients": ["ingredient1", "ingredient2", "ingredient3"],
+      "ingredients": ["2 cups ingredient1", "1 tablespoon ingredient2", "1/2 pound ingredient3"],
       "description": "Brief appealing description of the dish",
-      "instructions": ["Step 1", "Step 2", "Step 3", "Step 4", "Step 5"]
+      "instructions": [
+        "Heat 2 tablespoons olive oil in a large skillet over medium-high heat for 2 minutes",
+        "Add 1 diced onion and cook for 3-4 minutes until translucent",
+        "Add 2 minced garlic cloves and cook for 30 seconds until fragrant",
+        "Add 1 pound chicken breast (cut into 1-inch pieces) and cook for 5-6 minutes until golden brown",
+        "Season with 1 teaspoon salt and 1/2 teaspoon black pepper, then add 1 cup rice and 2 cups chicken broth",
+        "Bring to a boil, then reduce heat to low, cover, and simmer for 18-20 minutes until rice is tender",
+        "Remove from heat and let stand 5 minutes before serving"
+      ]
     }
   ]
 }
@@ -648,30 +1130,97 @@ Return EXACTLY this JSON format with no other text:
         rating: 4.3,
         time: '20 MIN',
         difficulty: UserPreferences.cookingStyle,
-        ingredients: ['Chicken', 'Vegetables', 'Soy Sauce', 'Rice'],
-        description: 'A quick and healthy stir fry with fresh ingredients.',
+        ingredients: [
+          '1 pound boneless chicken breast, cut into 1-inch strips',
+          '2 cups mixed bell peppers, sliced',
+          '1 medium onion, sliced',
+          '3 cloves garlic, minced',
+          '2 tablespoons vegetable oil',
+          '3 tablespoons soy sauce',
+          '1 tablespoon cornstarch',
+          '1 teaspoon sesame oil',
+          '1/2 teaspoon black pepper',
+          '2 cups cooked jasmine rice'
+        ],
+        description: 'A quick and healthy stir fry with tender chicken and crisp vegetables in a savory sauce.',
         instructions: [
-          'Cut chicken into bite-sized pieces',
-          'Heat oil in a wok over high heat',
-          'Add chicken and cook until golden',
-          'Add vegetables and stir-fry',
-          'Season and serve over rice'
+          'Heat 1 tablespoon vegetable oil in a large wok or skillet over high heat for 1 minute until smoking',
+          'Add chicken strips in a single layer and cook undisturbed for 3-4 minutes until golden brown on one side',
+          'Stir chicken and cook another 2-3 minutes until cooked through (internal temp 165°F). Remove to plate',
+          'Add remaining 1 tablespoon oil to the same pan, then add sliced onion and bell peppers',
+          'Stir-fry vegetables for 3-4 minutes until crisp-tender and slightly charred',
+          'Add minced garlic and cook for 30 seconds until fragrant',
+          'In a small bowl, whisk together soy sauce, cornstarch, and sesame oil until smooth',
+          'Return chicken to pan, pour sauce over everything, and toss for 1-2 minutes until sauce thickens',
+          'Season with black pepper and serve immediately over hot rice'
         ],
         imageUrl: '',
       ),
       Recipe(
-        name: 'Simple Pasta',
-        rating: 4.1,
-        time: '15 MIN',
+        name: 'Garlic Parmesan Pasta',
+        rating: 4.5,
+        time: '18 MIN',
         difficulty: UserPreferences.cookingStyle,
-        ingredients: ['Pasta', 'Tomatoes', 'Cheese', 'Herbs'],
-        description: 'Classic pasta dish with fresh ingredients.',
+        ingredients: [
+          '12 oz spaghetti or linguine pasta',
+          '6 cloves garlic, thinly sliced',
+          '1/2 cup extra virgin olive oil',
+          '1 cup freshly grated Parmesan cheese',
+          '2 large tomatoes, diced',
+          '1/4 cup fresh basil leaves, chopped',
+          '1 teaspoon salt',
+          '1/2 teaspoon black pepper',
+          '1/4 teaspoon red pepper flakes',
+          '2 tablespoons butter'
+        ],
+        description: 'Classic Italian pasta with aromatic garlic, rich Parmesan, and fresh herbs.',
         instructions: [
-          'Boil pasta according to package directions',
-          'Prepare sauce with tomatoes',
-          'Combine pasta and sauce',
-          'Top with cheese and herbs',
-          'Serve hot'
+          'Bring a large pot of salted water (1 tablespoon salt per quart) to a rolling boil',
+          'Add pasta and cook according to package directions until al dente (typically 8-10 minutes)',
+          'Reserve 1 cup pasta cooking water, then drain pasta',
+          'While pasta cooks, heat olive oil in a large skillet over medium-low heat for 2 minutes',
+          'Add sliced garlic to oil and cook for 2-3 minutes until golden and fragrant (do not brown)',
+          'Add diced tomatoes to the skillet and cook for 3-4 minutes until they start to break down',
+          'Add cooked pasta to the skillet with garlic and tomatoes',
+          'Add butter, 1/2 cup pasta water, salt, pepper, and red pepper flakes',
+          'Toss pasta for 2-3 minutes, adding more pasta water if needed to create a silky sauce',
+          'Remove from heat, add Parmesan cheese and fresh basil, toss until cheese melts',
+          'Serve immediately with additional Parmesan on the side'
+        ],
+        imageUrl: '',
+      ),
+      Recipe(
+        name: 'Herb-Crusted Salmon with Roasted Vegetables',
+        rating: 4.6,
+        time: '25 MIN',
+        difficulty: UserPreferences.cookingStyle,
+        ingredients: [
+          '4 salmon fillets (6 oz each), skin removed',
+          '1 pound baby potatoes, halved',
+          '1 bunch asparagus, trimmed',
+          '2 lemons, sliced',
+          '4 tablespoons olive oil, divided',
+          '2 tablespoons fresh dill, chopped',
+          '2 tablespoons fresh parsley, chopped',
+          '3 cloves garlic, minced',
+          '1 teaspoon salt',
+          '1/2 teaspoon black pepper',
+          '2 tablespoons butter',
+          '1/4 cup panko breadcrumbs'
+        ],
+        description: 'Flaky salmon with a crispy herb crust served alongside perfectly roasted seasonal vegetables.',
+        instructions: [
+          'Preheat oven to 425°F and line a large baking sheet with parchment paper',
+          'Toss halved potatoes with 2 tablespoons olive oil, 1/2 teaspoon salt, and 1/4 teaspoon pepper',
+          'Spread potatoes on one side of the baking sheet and roast for 12 minutes',
+          'Meanwhile, mix breadcrumbs, dill, parsley, minced garlic, and remaining salt and pepper in a bowl',
+          'Pat salmon fillets dry and brush with remaining 2 tablespoons olive oil',
+          'Press herb-breadcrumb mixture firmly onto top of each salmon fillet',
+          'After potatoes have roasted 12 minutes, add asparagus to the other side of the baking sheet',
+          'Place seasoned salmon fillets on top of the asparagus and arrange lemon slices around fish',
+          'Dot salmon with small pieces of butter and roast everything for 12-15 minutes',
+          'Salmon is done when it flakes easily with a fork and internal temperature reaches 145°F',
+          'Let rest for 3 minutes before serving with roasted vegetables and lemon wedges'
         ],
         imageUrl: '',
       ),
@@ -679,11 +1228,16 @@ Return EXACTLY this JSON format with no other text:
   }
 }
 
-// Recipes Screen
+// UPDATED: Recipes Screen - now accepts ingredients parameter
 class RecipesScreen extends StatefulWidget {
   final List<CameraDescription> cameras;
+  final List<String> ingredients; // New parameter for ingredients
   
-  const RecipesScreen({super.key, required this.cameras});
+  const RecipesScreen({
+    super.key, 
+    required this.cameras,
+    required this.ingredients, // Make ingredients required
+  });
 
   @override
   _RecipesScreenState createState() => _RecipesScreenState();
@@ -696,31 +1250,19 @@ class _RecipesScreenState extends State<RecipesScreen> {
   @override
   void initState() {
     super.initState();
-    _generateNewRecipes();
+    _generateRecipesFromIngredients();
   }
 
-  Future<void> _generateNewRecipes() async {
+  Future<void> _generateRecipesFromIngredients() async {
     setState(() {
       _isLoading = true;
     });
     
     try {
-      List<String> detectedIngredients = [];
+      print('Generating recipes with ingredients: ${widget.ingredients}');
       
-      // Step 1: Analyze fridge image if available
-      if (UserPreferences.lastFridgeImage != null) {
-        print('Analyzing fridge image with AI...');
-        detectedIngredients = await RecipeGenerator.analyzeImageForIngredients(UserPreferences.lastFridgeImage!);
-      } else {
-        print('No fridge image available, using fallback ingredients');
-        detectedIngredients = RecipeGenerator._getFallbackIngredients();
-      }
-      
-      print('Detected ingredients: $detectedIngredients');
-      
-      // Step 2: Generate recipes based on detected ingredients
-      print('Generating recipes with AI...');
-      final recipes = await RecipeGenerator.generateRecipesFromIngredients(detectedIngredients);
+      // Generate recipes based on provided ingredients
+      final recipes = await RecipeGenerator.generateRecipesFromIngredients(widget.ingredients);
       
       setState(() {
         _recipes = recipes;
@@ -739,12 +1281,22 @@ class _RecipesScreenState extends State<RecipesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('AI analysis failed. Showing sample recipes.'),
+            content: Text('AI recipe generation failed. Showing sample recipes.'),
             backgroundColor: Colors.orange,
           ),
         );
       }
     }
+  }
+
+  Future<void> _generateNewRecipes() async {
+    // Go back to ingredients confirmation screen for new recipes
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => IngredientsConfirmationScreen(cameras: widget.cameras),
+      ),
+    );
   }
 
   @override
@@ -779,7 +1331,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.black, size: 28),
-            onPressed: _generateNewRecipes, // Refresh recipes
+            onPressed: _generateNewRecipes, // Go back to ingredients screen
           ),
           IconButton(
             icon: const Icon(Icons.bookmark_border, color: Colors.black, size: 28),
@@ -804,13 +1356,8 @@ class _RecipesScreenState extends State<RecipesScreen> {
                   ),
                   SizedBox(height: 20),
                   Text(
-                    'Analyzing your fridge contents...',
+                    'Creating personalized recipes...',
                     style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Generating personalized recipes...',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
                 ],
               ),
@@ -833,9 +1380,9 @@ class _RecipesScreenState extends State<RecipesScreen> {
                       ),
                       TextButton.icon(
                         onPressed: _generateNewRecipes,
-                        icon: const Icon(Icons.refresh, color: Color(0xFF7B68EE)),
+                        icon: const Icon(Icons.edit, color: Color(0xFF7B68EE)),
                         label: const Text(
-                          'More recipes',
+                          'Edit ingredients',
                           style: TextStyle(color: Color(0xFF7B68EE)),
                         ),
                       ),
@@ -876,78 +1423,32 @@ class _RecipesScreenState extends State<RecipesScreen> {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            // Food Image
+            // Food Emoji Container (replacing Unsplash images)
             Container(
               width: 80,
               height: 80,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
+                gradient: LinearGradient(
+                  colors: [
+                    _getFoodColor(recipe.name),
+                    _getFoodColor(recipe.name).withOpacity(0.8)
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: _getFoodColor(recipe.name).withOpacity(0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  _getFoodImageUrl(recipe.name),
-                  fit: BoxFit.cover,
-                  headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                  },
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.grey[300]!, Colors.grey[100]!],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF7B68EE),
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    // Try to load a more specific fallback image
-                    return Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [_getFoodColor(recipe.name), _getFoodColor(recipe.name).withOpacity(0.7)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: Stack(
-                        children: [
-                          Center(
-                            child: Icon(
-                              _getFoodIcon(recipe.name),
-                              color: Colors.white.withOpacity(0.8),
-                              size: 35,
-                            ),
-                          ),
-                          // Add food emojis as overlays for better visual appeal
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: Text(
-                              _getFoodEmoji(recipe.name),
-                              style: const TextStyle(fontSize: 20),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+              child: Center(
+                child: Text(
+                  _getFoodEmoji(recipe.name),
+                  style: const TextStyle(fontSize: 40),
                 ),
               ),
             ),
@@ -1030,7 +1531,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
                       GestureDetector(
                         onTap: () => _toggleSaveRecipe(recipe),
                         child: Icon(
-                          UserPreferences.savedRecipes.contains(recipe)
+                          UserPreferences.isRecipeSaved(recipe)
                               ? Icons.bookmark
                               : Icons.bookmark_border,
                           color: const Color(0xFF7B68EE),
@@ -1074,86 +1575,6 @@ class _RecipesScreenState extends State<RecipesScreen> {
     );
   }
 
-  String _getFoodImageUrl(String recipeName) {
-    // Use specific working Unsplash photo IDs for reliable food images
-    Map<String, String> recipeImages = {
-      // Pasta dishes
-      'Spicy Pasta': 'https://images.unsplash.com/photo-1551892374-ecf8faf81d10?w=300&h=300&fit=crop&crop=center',
-      'Creamy Pasta': 'https://images.unsplash.com/photo-1563379091339-03246963d4b9?w=300&h=300&fit=crop&crop=center',
-      'Classic Pasta': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=300&fit=crop&crop=center',
-      'Rustic Pasta': 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=300&h=300&fit=crop&crop=center',
-      'Fresh Pasta': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=300&fit=crop&crop=center',
-      'Mediterranean Pasta': 'https://images.unsplash.com/photo-1563379091339-03246963d4b9?w=300&h=300&fit=crop&crop=center',
-      'Garlic Pasta': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=300&fit=crop&crop=center',
-      'Herb-Crusted Pasta': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=300&fit=crop&crop=center',
-      'Lemon Pasta': 'https://images.unsplash.com/photo-1563379091339-03246963d4b9?w=300&h=300&fit=crop&crop=center',
-      'Gourmet Pasta': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=300&fit=crop&crop=center',
-      
-      // Stir Fry dishes
-      'Asian Style Stir Fry': 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=300&h=300&fit=crop&crop=center',
-      'Classic Stir Fry': 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=300&h=300&fit=crop&crop=center',
-      'Spicy Stir Fry': 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=300&h=300&fit=crop&crop=center',
-      'Garlic Stir Fry': 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=300&h=300&fit=crop&crop=center',
-      
-      // Salad Bowls
-      'Fresh Salad Bowl': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=300&fit=crop&crop=center',
-      'Rustic Salad Bowl': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=300&fit=crop&crop=center',
-      'Mediterranean Salad Bowl': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&h=300&fit=crop&crop=center',
-      'Gourmet Salad Bowl': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=300&fit=crop&crop=center',
-      
-      // Rice Bowls
-      'Asian Style Rice Bowl': 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=300&h=300&fit=crop&crop=center',
-      'Fresh Rice Bowl': 'https://images.unsplash.com/photo-1563612116625-3012372fccce?w=300&h=300&fit=crop&crop=center',
-      'Rustic Rice Bowl': 'https://images.unsplash.com/photo-1563612116625-3012372fccce?w=300&h=300&fit=crop&crop=center',
-      'Hearty Rice Bowl': 'https://images.unsplash.com/photo-1563612116625-3012372fccce?w=300&h=300&fit=crop&crop=center',
-      'Lemon Rice Bowl': 'https://images.unsplash.com/photo-1563612116625-3012372fccce?w=300&h=300&fit=crop&crop=center',
-      
-      // Pizza
-      'Gourmet Pizza': 'https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=300&h=300&fit=crop&crop=center',
-      'Classic Pizza': 'https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=300&h=300&fit=crop&crop=center',
-      'Fresh Pizza': 'https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=300&h=300&fit=crop&crop=center',
-      
-      // Soups
-      'Hearty Soup': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=300&h=300&fit=crop&crop=center',
-      'Fresh Soup': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=300&h=300&fit=crop&crop=center',
-      'Classic Soup': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=300&h=300&fit=crop&crop=center',
-      
-      // Grilled dishes
-      'Herb-Crusted Grilled Dish': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&h=300&fit=crop&crop=center',
-      'Lemon Grilled Dish': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&h=300&fit=crop&crop=center',
-      'Classic Grilled Dish': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&h=300&fit=crop&crop=center',
-      'Rustic Grilled Dish': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&h=300&fit=crop&crop=center',
-      
-      // Curry
-      'Classic Curry': 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=300&h=300&fit=crop&crop=center',
-      'Spicy Curry': 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=300&h=300&fit=crop&crop=center',
-      'Hearty Curry': 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=300&h=300&fit=crop&crop=center',
-      
-      // Casseroles
-      'Herb-Crusted Casserole': 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=300&h=300&fit=crop&crop=center',
-      'Fresh Casserole': 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=300&h=300&fit=crop&crop=center',
-      'Gourmet Casserole': 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=300&h=300&fit=crop&crop=center',
-      'Classic Casserole': 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=300&h=300&fit=crop&crop=center',
-      
-      // Wraps
-      'Fresh Wrap': 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=300&h=300&fit=crop&crop=center',
-      'Healthy Wrap': 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=300&h=300&fit=crop&crop=center',
-      'Gourmet Wrap': 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=300&h=300&fit=crop&crop=center',
-      
-      // Sandwiches
-      'Gourmet Sandwich': 'https://images.unsplash.com/photo-1539252554453-80ab65ce3586?w=300&h=300&fit=crop&crop=center',
-      'Fresh Sandwich': 'https://images.unsplash.com/photo-1539252554453-80ab65ce3586?w=300&h=300&fit=crop&crop=center',
-      
-      // Omelettes
-      'Classic Omelette': 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=300&h=300&fit=crop&crop=center',
-      'Fresh Omelette': 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=300&h=300&fit=crop&crop=center',
-      'Herb-Crusted Omelette': 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=300&h=300&fit=crop&crop=center',
-    };
-    
-    // Return specific image or fallback to a general delicious food image
-    return recipeImages[recipeName] ?? 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&h=300&fit=crop&crop=center';
-  }
-
   Color _getFoodColor(String recipeName) {
     final colors = [
       const Color(0xFFE57373), const Color(0xFFFFB74D), const Color(0xFFFF8A65),
@@ -1163,31 +1584,34 @@ class _RecipesScreenState extends State<RecipesScreen> {
     return colors[recipeName.hashCode % colors.length];
   }
 
-  IconData _getFoodIcon(String recipeName) {
-    final icons = [
-      Icons.restaurant, Icons.local_pizza, Icons.rice_bowl, Icons.soup_kitchen,
-      Icons.lunch_dining, Icons.egg, Icons.eco, Icons.outdoor_grill,
-    ];
-    return icons[recipeName.hashCode % icons.length];
-  }
-
   String _getFoodEmoji(String recipeName) {
     String name = recipeName.toLowerCase();
     
-    if (name.contains('pasta')) return '🍝';
-    if (name.contains('stir fry')) return '🥘';
-    if (name.contains('salad')) return '🥗';
-    if (name.contains('rice bowl')) return '🍚';
-    if (name.contains('soup')) return '🍲';
+    // More comprehensive emoji mapping
+    if (name.contains('pasta') || name.contains('spaghetti') || name.contains('linguine')) return '🍝';
+    if (name.contains('stir fry') || name.contains('stir-fry') || name.contains('wok')) return '🥘';
+    if (name.contains('salad') || name.contains('greens')) return '🥗';
+    if (name.contains('rice bowl') || name.contains('rice') || name.contains('fried rice')) return '🍚';
+    if (name.contains('soup') || name.contains('broth') || name.contains('bisque')) return '🍲';
     if (name.contains('pizza')) return '🍕';
-    if (name.contains('curry')) return '🍛';
-    if (name.contains('omelette')) return '🍳';
-    if (name.contains('sandwich')) return '🥪';
-    if (name.contains('wrap')) return '🌯';
-    if (name.contains('grilled')) return '🍖';
-    if (name.contains('casserole')) return '🥘';
+    if (name.contains('curry') || name.contains('dal') || name.contains('masala')) return '🍛';
+    if (name.contains('omelette') || name.contains('omelet') || name.contains('scrambled')) return '🍳';
+    if (name.contains('sandwich') || name.contains('burger') || name.contains('panini')) return '🥪';
+    if (name.contains('wrap') || name.contains('burrito') || name.contains('tortilla')) return '🌯';
+    if (name.contains('grilled') || name.contains('bbq') || name.contains('barbecue')) return '🍖';
+    if (name.contains('casserole') || name.contains('baked') || name.contains('lasagna')) return '🥘';
+    if (name.contains('chicken') || name.contains('poultry')) return '🍗';
+    if (name.contains('fish') || name.contains('salmon') || name.contains('tuna')) return '🐟';
+    if (name.contains('beef') || name.contains('steak') || name.contains('meat')) return '🥩';
+    if (name.contains('noodle') || name.contains('ramen') || name.contains('pho')) return '🍜';
+    if (name.contains('taco') || name.contains('mexican')) return '🌮';
+    if (name.contains('sushi') || name.contains('roll')) return '🍣';
+    if (name.contains('smoothie') || name.contains('shake')) return '🥤';
+    if (name.contains('bread') || name.contains('toast')) return '🍞';
+    if (name.contains('egg')) return '🥚';
+    if (name.contains('potato') || name.contains('fries')) return '🥔';
     
-    return '🍽️';
+    return '🍽️'; // Default food emoji
   }
 
   Color _getDifficultyColor(String difficulty) {
@@ -1203,14 +1627,22 @@ class _RecipesScreenState extends State<RecipesScreen> {
     }
   }
 
-  void _toggleSaveRecipe(Recipe recipe) {
-    setState(() {
-      if (UserPreferences.savedRecipes.contains(recipe)) {
-        UserPreferences.savedRecipes.remove(recipe);
-      } else {
-        UserPreferences.savedRecipes.add(recipe);
-      }
-    });
+  Future<void> _toggleSaveRecipe(Recipe recipe) async {
+    await UserPreferences.toggleSaveRecipe(recipe);
+    setState(() {}); // Update UI to reflect bookmark state
+    
+    // Show feedback
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          UserPreferences.isRecipeSaved(recipe) 
+              ? 'Recipe saved to bookmarks!' 
+              : 'Recipe removed from bookmarks'
+        ),
+        duration: const Duration(seconds: 2),
+        backgroundColor: const Color(0xFF7B68EE),
+      ),
+    );
   }
 
   void _showRecipeDetails(Recipe recipe) {
@@ -1223,92 +1655,17 @@ class _RecipesScreenState extends State<RecipesScreen> {
   }
 }
 
-// Recipe Detail Screen
-class RecipeDetailScreen extends StatelessWidget {
+// Recipe Detail Screen (unchanged)
+class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
 
   const RecipeDetailScreen({super.key, required this.recipe});
 
-  String _getFoodImageUrl(String recipeName) {
-    // Use the same reliable image mapping for recipe details (higher resolution)
-    Map<String, String> recipeImages = {
-      // Pasta dishes
-      'Spicy Pasta': 'https://images.unsplash.com/photo-1551892374-ecf8faf81d10?w=600&h=400&fit=crop&crop=center',
-      'Creamy Pasta': 'https://images.unsplash.com/photo-1563379091339-03246963d4b9?w=600&h=400&fit=crop&crop=center',
-      'Classic Pasta': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=600&h=400&fit=crop&crop=center',
-      'Rustic Pasta': 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=600&h=400&fit=crop&crop=center',
-      'Fresh Pasta': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=600&h=400&fit=crop&crop=center',
-      'Mediterranean Pasta': 'https://images.unsplash.com/photo-1563379091339-03246963d4b9?w=600&h=400&fit=crop&crop=center',
-      'Garlic Pasta': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=600&h=400&fit=crop&crop=center',
-      'Herb-Crusted Pasta': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=600&h=400&fit=crop&crop=center',
-      'Lemon Pasta': 'https://images.unsplash.com/photo-1563379091339-03246963d4b9?w=600&h=400&fit=crop&crop=center',
-      'Gourmet Pasta': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=600&h=400&fit=crop&crop=center',
-      
-      // Stir Fry dishes
-      'Asian Style Stir Fry': 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600&h=400&fit=crop&crop=center',
-      'Classic Stir Fry': 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600&h=400&fit=crop&crop=center',
-      'Spicy Stir Fry': 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600&h=400&fit=crop&crop=center',
-      'Garlic Stir Fry': 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600&h=400&fit=crop&crop=center',
-      
-      // Salad Bowls
-      'Fresh Salad Bowl': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=400&fit=crop&crop=center',
-      'Rustic Salad Bowl': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=400&fit=crop&crop=center',
-      'Mediterranean Salad Bowl': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&h=400&fit=crop&crop=center',
-      'Gourmet Salad Bowl': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&h=400&fit=crop&crop=center',
-      
-      // Rice Bowls
-      'Asian Style Rice Bowl': 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600&h=400&fit=crop&crop=center',
-      'Fresh Rice Bowl': 'https://images.unsplash.com/photo-1563612116625-3012372fccce?w=600&h=400&fit=crop&crop=center',
-      'Rustic Rice Bowl': 'https://images.unsplash.com/photo-1563612116625-3012372fccce?w=600&h=400&fit=crop&crop=center',
-      'Hearty Rice Bowl': 'https://images.unsplash.com/photo-1563612116625-3012372fccce?w=600&h=400&fit=crop&crop=center',
-      'Lemon Rice Bowl': 'https://images.unsplash.com/photo-1563612116625-3012372fccce?w=600&h=400&fit=crop&crop=center',
-      
-      // Pizza
-      'Gourmet Pizza': 'https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=600&h=400&fit=crop&crop=center',
-      'Classic Pizza': 'https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=600&h=400&fit=crop&crop=center',
-      'Fresh Pizza': 'https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=600&h=400&fit=crop&crop=center',
-      
-      // Soups
-      'Hearty Soup': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=600&h=400&fit=crop&crop=center',
-      'Fresh Soup': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=600&h=400&fit=crop&crop=center',
-      'Classic Soup': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=600&h=400&fit=crop&crop=center',
-      
-      // Grilled dishes
-      'Herb-Crusted Grilled Dish': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop&crop=center',
-      'Lemon Grilled Dish': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop&crop=center',
-      'Classic Grilled Dish': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop&crop=center',
-      'Rustic Grilled Dish': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop&crop=center',
-      
-      // Curry
-      'Classic Curry': 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&h=400&fit=crop&crop=center',
-      'Spicy Curry': 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&h=400&fit=crop&crop=center',
-      'Hearty Curry': 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&h=400&fit=crop&crop=center',
-      
-      // Casseroles
-      'Herb-Crusted Casserole': 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=600&h=400&fit=crop&crop=center',
-      'Fresh Casserole': 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=600&h=400&fit=crop&crop=center',
-      'Gourmet Casserole': 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=600&h=400&fit=crop&crop=center',
-      'Classic Casserole': 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=600&h=400&fit=crop&crop=center',
-      
-      // Wraps
-      'Fresh Wrap': 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=600&h=400&fit=crop&crop=center',
-      'Healthy Wrap': 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=600&h=400&fit=crop&crop=center',
-      'Gourmet Wrap': 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=600&h=400&fit=crop&crop=center',
-      
-      // Sandwiches
-      'Gourmet Sandwich': 'https://images.unsplash.com/photo-1539252554453-80ab65ce3586?w=600&h=400&fit=crop&crop=center',
-      'Fresh Sandwich': 'https://images.unsplash.com/photo-1539252554453-80ab65ce3586?w=600&h=400&fit=crop&crop=center',
-      
-      // Omelettes
-      'Classic Omelette': 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=600&h=400&fit=crop&crop=center',
-      'Fresh Omelette': 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=600&h=400&fit=crop&crop=center',
-      'Herb-Crusted Omelette': 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=600&h=400&fit=crop&crop=center',
-    };
-    
-    // Return specific image or fallback to a beautiful food image
-    return recipeImages[recipeName] ?? 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&h=400&fit=crop&crop=center';
-  }
+  @override
+  _RecipeDetailScreenState createState() => _RecipeDetailScreenState();
+}
 
+class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   Color _getFoodColor(String recipeName) {
     final colors = [
       const Color(0xFFE57373), const Color(0xFFFFB74D), const Color(0xFFFF8A65),
@@ -1317,12 +1674,27 @@ class RecipeDetailScreen extends StatelessWidget {
     return colors[recipeName.hashCode % colors.length];
   }
 
-  IconData _getFoodIcon(String recipeName) {
-    final icons = [
-      Icons.restaurant, Icons.local_pizza, Icons.rice_bowl, Icons.soup_kitchen,
-      Icons.lunch_dining, Icons.egg, Icons.eco, Icons.outdoor_grill,
-    ];
-    return icons[recipeName.hashCode % icons.length];
+  String _getFoodEmoji(String recipeName) {
+    String name = recipeName.toLowerCase();
+    
+    if (name.contains('pasta') || name.contains('spaghetti')) return '🍝';
+    if (name.contains('stir fry') || name.contains('stir-fry')) return '🥘';
+    if (name.contains('salad')) return '🥗';
+    if (name.contains('rice bowl') || name.contains('rice')) return '🍚';
+    if (name.contains('soup')) return '🍲';
+    if (name.contains('pizza')) return '🍕';
+    if (name.contains('curry')) return '🍛';
+    if (name.contains('omelette') || name.contains('omelet')) return '🍳';
+    if (name.contains('sandwich')) return '🥪';
+    if (name.contains('wrap')) return '🌯';
+    if (name.contains('grilled')) return '🍖';
+    if (name.contains('casserole')) return '🥘';
+    if (name.contains('chicken')) return '🍗';
+    if (name.contains('fish') || name.contains('salmon')) return '🐟';
+    if (name.contains('beef') || name.contains('steak')) return '🥩';
+    if (name.contains('noodle') || name.contains('ramen')) return '🍜';
+    
+    return '🍽️';
   }
 
   @override
@@ -1337,7 +1709,7 @@ class RecipeDetailScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          recipe.name,
+          widget.recipe.name,
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -1347,13 +1719,25 @@ class RecipeDetailScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: Icon(
-              UserPreferences.savedRecipes.contains(recipe)
+              UserPreferences.isRecipeSaved(widget.recipe)
                   ? Icons.bookmark
                   : Icons.bookmark_border,
               color: const Color(0xFF7B68EE),
             ),
-            onPressed: () {
-              // Toggle save recipe functionality can be added here
+            onPressed: () async {
+              await UserPreferences.toggleSaveRecipe(widget.recipe);
+              setState(() {}); // Update bookmark icon
+              
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    UserPreferences.isRecipeSaved(widget.recipe) 
+                        ? 'Recipe saved to bookmarks!' 
+                        : 'Recipe removed from bookmarks'
+                  ),
+                  backgroundColor: const Color(0xFF7B68EE),
+                ),
+              );
             },
           ),
         ],
@@ -1363,35 +1747,34 @@ class RecipeDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Recipe Image
-            Container(
-              width: double.infinity,
-              height: 200,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+            // Recipe Emoji Display
+            Center(
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  gradient: LinearGradient(
+                    colors: [
+                      _getFoodColor(widget.recipe.name),
+                      _getFoodColor(widget.recipe.name).withOpacity(0.8)
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image.network(
-                  _getFoodImageUrl(recipe.name),
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: _getFoodColor(recipe.name),
-                      child: Icon(
-                        _getFoodIcon(recipe.name),
-                        color: Colors.white,
-                        size: 80,
-                      ),
-                    );
-                  },
+                  boxShadow: [
+                    BoxShadow(
+                      color: _getFoodColor(widget.recipe.name).withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    _getFoodEmoji(widget.recipe.name),
+                    style: const TextStyle(fontSize: 100),
+                  ),
                 ),
               ),
             ),
@@ -1400,6 +1783,7 @@ class RecipeDetailScreen extends StatelessWidget {
             
             // Recipe Info
             Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -1408,7 +1792,7 @@ class RecipeDetailScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '${recipe.rating} ⭐',
+                    '${widget.recipe.rating} ⭐',
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -1423,7 +1807,7 @@ class RecipeDetailScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    recipe.time,
+                    widget.recipe.time,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -1438,7 +1822,7 @@ class RecipeDetailScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    recipe.difficulty.toUpperCase(),
+                    widget.recipe.difficulty.toUpperCase(),
                     style: const TextStyle(
                       color: Colors.black,
                       fontWeight: FontWeight.w600,
@@ -1452,12 +1836,13 @@ class RecipeDetailScreen extends StatelessWidget {
             
             // Description
             Text(
-              recipe.description,
+              widget.recipe.description,
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.black87,
                 height: 1.5,
               ),
+              textAlign: TextAlign.center,
             ),
             
             const SizedBox(height: 24),
@@ -1474,7 +1859,7 @@ class RecipeDetailScreen extends StatelessWidget {
             
             const SizedBox(height: 12),
             
-            ...recipe.ingredients.map((ingredient) => Padding(
+            ...widget.recipe.ingredients.map((ingredient) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
@@ -1512,7 +1897,7 @@ class RecipeDetailScreen extends StatelessWidget {
             
             const SizedBox(height: 12),
             
-            ...recipe.instructions.asMap().entries.map((entry) {
+            ...widget.recipe.instructions.asMap().entries.map((entry) {
               int index = entry.key;
               String instruction = entry.value;
               
@@ -1561,11 +1946,47 @@ class RecipeDetailScreen extends StatelessWidget {
   }
 }
 
-// Saved Recipes Screen
-class SavedRecipesScreen extends StatelessWidget {
+// Saved Recipes Screen (unchanged)
+class SavedRecipesScreen extends StatefulWidget {
   final List<CameraDescription> cameras;
   
   const SavedRecipesScreen({super.key, required this.cameras});
+
+  @override
+  _SavedRecipesScreenState createState() => _SavedRecipesScreenState();
+}
+
+class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Reload saved recipes when screen opens
+    _loadSavedRecipes();
+  }
+
+  Future<void> _loadSavedRecipes() async {
+    await UserPreferences.loadSavedRecipes();
+    setState(() {});
+  }
+
+  String _getFoodEmoji(String recipeName) {
+    String name = recipeName.toLowerCase();
+    
+    if (name.contains('pasta')) return '🍝';
+    if (name.contains('stir fry')) return '🥘';
+    if (name.contains('salad')) return '🥗';
+    if (name.contains('rice bowl') || name.contains('rice')) return '🍚';
+    if (name.contains('soup')) return '🍲';
+    if (name.contains('pizza')) return '🍕';
+    if (name.contains('curry')) return '🍛';
+    if (name.contains('omelette')) return '🍳';
+    if (name.contains('sandwich')) return '🥪';
+    if (name.contains('wrap')) return '🌯';
+    if (name.contains('grilled')) return '🍖';
+    if (name.contains('casserole')) return '🥘';
+    
+    return '🍽️';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1605,56 +2026,114 @@ class SavedRecipesScreen extends StatelessWidget {
                       color: Colors.grey,
                     ),
                   ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Bookmark recipes to see them here!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
                 ],
               ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: UserPreferences.savedRecipes.length,
-              itemBuilder: (context, index) {
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFF7B68EE), width: 2),
+          : Column(
+              children: [
+                // Header with count
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'You have ${UserPreferences.savedRecipes.length} saved recipe${UserPreferences.savedRecipes.length == 1 ? '' : 's'}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
+                    ),
                   ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
-                    title: Text(
-                      UserPreferences.savedRecipes[index].name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      UserPreferences.savedRecipes[index].time,
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                    trailing: const Icon(
-                      Icons.bookmark,
-                      color: Color(0xFF7B68EE),
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => RecipeDetailScreen(
-                            recipe: UserPreferences.savedRecipes[index],
+                ),
+                // Recipe list
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: UserPreferences.savedRecipes.length,
+                    itemBuilder: (context, index) {
+                      final recipe = UserPreferences.savedRecipes[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFF7B68EE), width: 2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF7B68EE).withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(16),
+                          leading: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF7B68EE).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Center(
+                              child: Text(
+                                _getFoodEmoji(recipe.name),
+                                style: const TextStyle(fontSize: 24),
+                              ),
+                            ),
                           ),
+                          title: Text(
+                            recipe.name,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: Row(
+                            children: [
+                              Text(
+                                '${recipe.rating} ⭐',
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                recipe.time,
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                          trailing: const Icon(
+                            Icons.bookmark,
+                            color: Color(0xFF7B68EE),
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RecipeDetailScreen(recipe: recipe),
+                              ),
+                            ).then((_) {
+                              // Refresh the list when returning from detail screen
+                              setState(() {});
+                            });
+                          },
                         ),
                       );
                     },
                   ),
-                );
-              },
+                ),
+              ],
             ),
     );
   }
 }
 
-// Recipe Model
+// Recipe Model (unchanged)
 class Recipe {
   final String name;
   final double rating;
