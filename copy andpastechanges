@@ -14,8 +14,9 @@ Widget build(BuildContext context) {
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,  // THIS CENTERS HORIZONTALLY
           children: [
-            const SizedBox(height: 60),  // Same as other screens
+            const SizedBox(height: 60),
             // Logo
             SizedBox(
               height: 60,
@@ -36,7 +37,7 @@ Widget build(BuildContext context) {
               ),
             ),
 
-            const Spacer(),  // Push content to center
+            const Spacer(),
 
             // Fridge Illustration
             Container(
@@ -120,7 +121,7 @@ Widget build(BuildContext context) {
               textAlign: TextAlign.center,
             ),
 
-            const Spacer(),  // Balance the bottom
+            const Spacer(),
           ],
         ),
       ),
