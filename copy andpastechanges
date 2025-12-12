@@ -112,3 +112,20 @@ Widget build(BuildContext context) {
               // Title
               const Text(
                 'Take a photo of\nyour fridge!',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                  height: 1.2,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 60),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
