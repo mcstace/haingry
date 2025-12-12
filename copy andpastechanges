@@ -1,115 +1,551 @@
-body: SafeArea(
-  child: Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Logo
-          SizedBox(
-            height: 60,
-            child: Image.asset(
-              'assets/images/haingrypurple.png',
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return const Text(
-                  'haingry',
-                  style: TextStyle(
-                    fontSize: 56,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF7B68EE),
-                    letterSpacing: -1,
-                  ),
-                );
-              },
-            ),
-          ),
-          
-          const SizedBox(height: 30),
-          
-          // Fridge Illustration
-          Container(
-            width: 220,
-            height: 340,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Image.asset(
-                'assets/images/fridge.png',
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 220,
-                    height: 340,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF7B68EE),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.image_not_supported, color: Colors.white, size: 60),
-                          SizedBox(height: 16),
-                          Text(
-                            'Add fridge.png to\nassets/images/ folder',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.white, fontSize: 16),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 30),
-          
-          // Camera Button
-          GestureDetector(
-            onTap: _takePicture,
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: const Color(0xFF7B68EE),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 4),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF7B68EE).withOpacity(0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.camera_alt,
-                color: Colors.white,
-                size: 40,
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 20),
-          
-          // Title
-          const Text(
-            'Take a photo of\nyour fridge!',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-              height: 1.2,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    ),
-  ),
-),
+
+lib/main.dart:388:20: Error: Can't find ')' to match '('.
+    return Scaffold(
+                   ^
+lib/main.dart:383:64: Error: Can't find '}' to match '{'.
+class _FridgePhotoScreenState extends State<FridgePhotoScreen> {
+                                                               ^
+lib/main.dart:601:1: Error: Classes can't be declared inside other classes.
+Try moving the class to the top-level.
+class IngredientsConfirmationScreen extends StatefulWidget {
+^^^^^
+lib/main.dart:601:37: Error: Expected a class member, but got 'extends'.
+class IngredientsConfirmationScreen extends StatefulWidget {
+                                    ^^^^^^^
+lib/main.dart:601:45: Error: A method declaration needs an explicit list of
+parameters.
+Try adding a parameter list to the method declaration.
+class IngredientsConfirmationScreen extends StatefulWidget {
+                                            ^^^^^^^^^^^^^^
+lib/main.dart:611:1: Error: Classes can't be declared inside other classes.
+Try moving the class to the top-level.
+class _IngredientsConfirmationScreenState
+^^^^^
+lib/main.dart:612:5: Error: Expected a class member, but got 'extends'.
+    extends State<IngredientsConfirmationScreen> {
+    ^^^^^^^
+lib/main.dart:612:13: Error: A method declaration needs an explicit list of
+parameters.
+Try adding a parameter list to the method declaration.
+    extends State<IngredientsConfirmationScreen> {
+            ^^^^^
+lib/main.dart:982:1: Error: Classes can't be declared inside other classes.
+Try moving the class to the top-level.
+class RecipeGenerator {
+^^^^^
+lib/main.dart:1292:1: Error: Classes can't be declared inside other classes.
+Try moving the class to the top-level.
+class RecipesScreen extends StatefulWidget {
+^^^^^
+lib/main.dart:1292:21: Error: Expected a class member, but got 'extends'.
+class RecipesScreen extends StatefulWidget {
+                    ^^^^^^^
+lib/main.dart:1292:29: Error: A method declaration needs an explicit list of
+parameters.
+Try adding a parameter list to the method declaration.
+class RecipesScreen extends StatefulWidget {
+                            ^^^^^^^^^^^^^^
+lib/main.dart:1306:1: Error: Classes can't be declared inside other classes.
+Try moving the class to the top-level.
+class _RecipesScreenState extends State<RecipesScreen> {
+^^^^^
+lib/main.dart:1306:27: Error: Expected a class member, but got 'extends'.
+class _RecipesScreenState extends State<RecipesScreen> {
+                          ^^^^^^^
+lib/main.dart:1306:35: Error: A method declaration needs an explicit list of
+parameters.
+Try adding a parameter list to the method declaration.
+class _RecipesScreenState extends State<RecipesScreen> {
+                                  ^^^^^
+lib/main.dart:1775:1: Error: Classes can't be declared inside other classes.
+Try moving the class to the top-level.
+class RecipeDetailScreen extends StatefulWidget {
+^^^^^
+lib/main.dart:1775:26: Error: Expected a class member, but got 'extends'.
+class RecipeDetailScreen extends StatefulWidget {
+                         ^^^^^^^
+lib/main.dart:1775:34: Error: A method declaration needs an explicit list of
+parameters.
+Try adding a parameter list to the method declaration.
+class RecipeDetailScreen extends StatefulWidget {
+                                 ^^^^^^^^^^^^^^
+lib/main.dart:1784:1: Error: Classes can't be declared inside other classes.
+Try moving the class to the top-level.
+class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
+^^^^^
+lib/main.dart:1784:32: Error: Expected a class member, but got 'extends'.
+class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
+                               ^^^^^^^
+lib/main.dart:1784:40: Error: A method declaration needs an explicit list of
+parameters.
+Try adding a parameter list to the method declaration.
+class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
+                                       ^^^^^
+lib/main.dart:2081:1: Error: Classes can't be declared inside other classes.
+Try moving the class to the top-level.
+class SavedRecipesScreen extends StatefulWidget {
+^^^^^
+lib/main.dart:2081:26: Error: Expected a class member, but got 'extends'.
+class SavedRecipesScreen extends StatefulWidget {
+                         ^^^^^^^
+lib/main.dart:2081:34: Error: A method declaration needs an explicit list of
+parameters.
+Try adding a parameter list to the method declaration.
+class SavedRecipesScreen extends StatefulWidget {
+                                 ^^^^^^^^^^^^^^
+lib/main.dart:2090:1: Error: Classes can't be declared inside other classes.
+Try moving the class to the top-level.
+class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
+^^^^^
+lib/main.dart:2090:32: Error: Expected a class member, but got 'extends'.
+class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
+                               ^^^^^^^
+lib/main.dart:2090:40: Error: A method declaration needs an explicit list of
+parameters.
+Try adding a parameter list to the method declaration.
+class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
+                                       ^^^^^
+lib/main.dart:2259:1: Error: Classes can't be declared inside other classes.
+Try moving the class to the top-level.
+class Recipe {
+^^^^^
+lib/main.dart:1292:29: Error: 'StatefulWidget' is already declared in this
+scope.
+class RecipesScreen extends StatefulWidget {
+                            ^^^^^^^^^^^^^^
+lib/main.dart:601:45: Context: Previous declaration of 'StatefulWidget'.
+class IngredientsConfirmationScreen extends StatefulWidget {
+                                            ^^^^^^^^^^^^^^
+lib/main.dart:1775:34: Error: 'StatefulWidget' is already declared in this
+scope.
+class RecipeDetailScreen extends StatefulWidget {
+                                 ^^^^^^^^^^^^^^
+lib/main.dart:601:45: Context: Previous declaration of 'StatefulWidget'.
+class IngredientsConfirmationScreen extends StatefulWidget {
+                                            ^^^^^^^^^^^^^^
+lib/main.dart:2081:34: Error: 'StatefulWidget' is already declared in this
+scope.
+class SavedRecipesScreen extends StatefulWidget {
+                                 ^^^^^^^^^^^^^^
+lib/main.dart:601:45: Context: Previous declaration of 'StatefulWidget'.
+class IngredientsConfirmationScreen extends StatefulWidget {
+                                            ^^^^^^^^^^^^^^
+lib/main.dart:1306:35: Error: 'State' is already declared in this scope.
+class _RecipesScreenState extends State<RecipesScreen> {
+                                  ^^^^^
+lib/main.dart:612:13: Context: Previous declaration of 'State'.
+    extends State<IngredientsConfirmationScreen> {
+            ^^^^^
+lib/main.dart:1784:40: Error: 'State' is already declared in this scope.
+class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
+                                       ^^^^^
+lib/main.dart:612:13: Context: Previous declaration of 'State'.
+    extends State<IngredientsConfirmationScreen> {
+            ^^^^^
+lib/main.dart:2090:40: Error: 'State' is already declared in this scope.
+class _SavedRecipesScreenState extends State<SavedRecipesScreen> {
+                                       ^^^^^
+lib/main.dart:612:13: Context: Previous declaration of 'State'.
+    extends State<IngredientsConfirmationScreen> {
+            ^^^^^
+lib/main.dart:50:15: Error: Type 'Recipe' not found.
+  static List<Recipe> savedRecipes = [];
+              ^^^^^^
+lib/main.dart:107:40: Error: Type 'Recipe' not found.
+  static Future<void> toggleSaveRecipe(Recipe recipe) async {
+                                       ^^^^^^
+lib/main.dart:117:29: Error: Type 'Recipe' not found.
+  static bool isRecipeSaved(Recipe recipe) {
+                            ^^^^^^
+lib/main.dart:50:15: Error: 'Recipe' isn't a type.
+  static List<Recipe> savedRecipes = [];
+              ^^^^^^
+lib/main.dart:60:30: Error: The getter 'name' isn't defined for the type
+'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'name'.
+              'name': recipe.name,
+                             ^^^^
+lib/main.dart:61:32: Error: The getter 'rating' isn't defined for the type
+'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'rating'.
+              'rating': recipe.rating,
+                               ^^^^^^
+lib/main.dart:62:30: Error: The getter 'time' isn't defined for the type
+'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'time'.
+              'time': recipe.time,
+                             ^^^^
+lib/main.dart:63:36: Error: The getter 'difficulty' isn't defined for the type
+'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'difficulty'.
+              'difficulty': recipe.difficulty,
+                                   ^^^^^^^^^^
+lib/main.dart:64:37: Error: The getter 'ingredients' isn't defined for the type
+'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'ingredients'.
+              'ingredients': recipe.ingredients,
+                                    ^^^^^^^^^^^
+lib/main.dart:65:37: Error: The getter 'description' isn't defined for the type
+'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'description'.
+              'description': recipe.description,
+                                    ^^^^^^^^^^^
+lib/main.dart:66:38: Error: The getter 'instructions' isn't defined for the type
+'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'instructions'.
+              'instructions': recipe.instructions,
+                                     ^^^^^^^^^^^^
+lib/main.dart:67:34: Error: The getter 'imageUrl' isn't defined for the type
+'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'imageUrl'.
+              'imageUrl': recipe.imageUrl,
+                                 ^^^^^^^^
+lib/main.dart:70:12: Error: A value of type 'List<dynamic>' can't be assigned to
+a variable of type 'List<String>'.
+ - 'List' is from 'dart:core'.
+          .toList();
+           ^
+lib/main.dart:87:18: Error: Method not found: 'Recipe'.
+          return Recipe(
+                 ^^^^^^
+lib/main.dart:107:40: Error: 'Recipe' isn't a type.
+  static Future<void> toggleSaveRecipe(Recipe recipe) async {
+                                       ^^^^^^
+lib/main.dart:108:35: Error: The getter 'name' isn't defined for the type
+'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'name'.
+    if (savedRecipes.any((r) => r.name == recipe.name)) {
+                                  ^^^^
+lib/main.dart:109:41: Error: The getter 'name' isn't defined for the type
+'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'name'.
+      savedRecipes.removeWhere((r) => r.name == recipe.name);
+                                        ^^^^
+lib/main.dart:117:29: Error: 'Recipe' isn't a type.
+  static bool isRecipeSaved(Recipe recipe) {
+                            ^^^^^^
+lib/main.dart:118:38: Error: The getter 'name' isn't defined for the type
+'Object?'.
+ - 'Object' is from 'dart:core'.
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'name'.
+    return savedRecipes.any((r) => r.name == recipe.name);
+                                     ^^^^
+lib/main.dart:172:31: Error: The method 'SavedRecipesScreen' isn't defined for
+the type 'CookingStyleScreen'.
+ - 'CookingStyleScreen' is from 'package:test_app/main.dart' ('lib/main.dart').
+Try correcting the name to the name of an existing method, or defining a method
+named 'SavedRecipesScreen'.
+                              SavedRecipesScreen(cameras: cameras),
+                              ^^^^^^^^^^^^^^^^^^
+lib/main.dart:514:16: Error: A function expression can't have a name.
+  Future<void> _takePicture() async {
+               ^^^^^^^^^^^^
+lib/main.dart:547:3: Error: Expected ',' before this.
+  Future<void> _pickImage(ImageSource source) async {
+  ^^^^^^
+lib/main.dart:547:16: Error: A function expression can't have a name.
+  Future<void> _pickImage(ImageSource source) async {
+               ^^^^^^^^^^
+lib/main.dart:568:3: Error: Expected ',' before this.
+  Future<void> _processImage(XFile image) async {
+  ^^^^^^
+lib/main.dart:568:16: Error: A function expression can't have a name.
+  Future<void> _processImage(XFile image) async {
+               ^^^^^^^^^^^^^
+lib/main.dart:388:20: Error: Too many positional arguments: 0 allowed, but 3
+found.
+Try removing the extra positional arguments.
+    return Scaffold(
+                   ^
+../flutter/packages/flutter/lib/src/material/scaffold.dart:1689:9: Context:
+Found this candidate, but the arguments don't match.
+  const Scaffold({
+        ^^^^^^^^
+lib/main.dart:579:3: Error: Expected ';' after this.
+  }
+  ^
+lib/main.dart:551:9: Error: Local variable '_showPermissionDialog' can't be
+referenced before it is declared.
+        _showPermissionDialog();
+        ^^^^^^^^^^^^^^^^^^^^^
+lib/main.dart:581:8: Context: This is the declaration of the variable
+'_showPermissionDialog'.
+  void _showPermissionDialog() {
+       ^^^^^^^^^^^^^^^^^^^^^
+lib/main.dart:604:60: Error: Expected ',' before this.
+  const IngredientsConfirmationScreen({super.key, required this.cameras});
+                                                           ^^^^
+lib/main.dart:604:46: Error: Superclass has no getter named 'key'.
+  const IngredientsConfirmationScreen({super.key, required this.cameras});
+                                             ^^^
+lib/main.dart:604:9: Error: Not a constant expression.
+  const IngredientsConfirmationScreen({super.key, required this.cameras});
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lib/main.dart:607:3: Error: '_IngredientsConfirmationScreenState' isn't a type.
+  _IngredientsConfirmationScreenState createState() =>
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lib/main.dart:608:7: Error: The method '_IngredientsConfirmationScreenState'
+isn't defined for the type '_FridgePhotoScreenState'.
+ - '_FridgePhotoScreenState' is from 'package:test_app/main.dart'
+ ('lib/main.dart').
+Try correcting the name to the name of an existing method, or defining a method
+named '_IngredientsConfirmationScreenState'.
+      _IngredientsConfirmationScreenState();
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lib/main.dart:621:5: Error: Local variable '_analyzeIngredients' can't be
+referenced before it is declared.
+    _analyzeIngredients();
+    ^^^^^^^^^^^^^^^^^^^
+lib/main.dart:624:16: Context: This is the declaration of the variable
+'_analyzeIngredients'.
+  Future<void> _analyzeIngredients() async {
+               ^^^^^^^^^^^^^^^^^^^
+lib/main.dart:621:5: Error: The method '_analyzeIngredients' isn't defined for
+the type '_FridgePhotoScreenState'.
+ - '_FridgePhotoScreenState' is from 'package:test_app/main.dart'
+ ('lib/main.dart').
+Try correcting the name to the name of an existing method, or defining a method
+named '_analyzeIngredients'.
+    _analyzeIngredients();
+    ^^^^^^^^^^^^^^^^^^^
+lib/main.dart:630:37: Error: The getter 'RecipeGenerator' isn't defined for the
+type '_FridgePhotoScreenState'.
+ - '_FridgePhotoScreenState' is from 'package:test_app/main.dart'
+ ('lib/main.dart').
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'RecipeGenerator'.
+        detectedIngredients = await RecipeGenerator.analyzeImageForIngredients(
+                                    ^^^^^^^^^^^^^^^
+lib/main.dart:635:31: Error: The getter 'RecipeGenerator' isn't defined for the
+type '_FridgePhotoScreenState'.
+ - '_FridgePhotoScreenState' is from 'package:test_app/main.dart'
+ ('lib/main.dart').
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'RecipeGenerator'.
+        detectedIngredients = RecipeGenerator._getFallbackIngredients();
+                              ^^^^^^^^^^^^^^^
+lib/main.dart:645:32: Error: The getter 'RecipeGenerator' isn't defined for the
+type '_FridgePhotoScreenState'.
+ - '_FridgePhotoScreenState' is from 'package:test_app/main.dart'
+ ('lib/main.dart').
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'RecipeGenerator'.
+        _detectedIngredients = RecipeGenerator._getFallbackIngredients();
+                               ^^^^^^^^^^^^^^^
+lib/main.dart:684:13: Error: The method 'RecipesScreen' isn't defined for the
+type '_FridgePhotoScreenState'.
+ - '_FridgePhotoScreenState' is from 'package:test_app/main.dart'
+ ('lib/main.dart').
+Try correcting the name to the name of an existing method, or defining a method
+named 'RecipesScreen'.
+            RecipesScreen(cameras: widget.cameras, ingredients: allIngredients),
+            ^^^^^^^^^^^^^
+lib/main.dart:1298:14: Error: Expected ',' before this.
+    required this.cameras,
+             ^^^^
+lib/main.dart:1299:14: Error: Expected ',' before this.
+    required this.ingredients, // Make ingredients required
+             ^^^^
+lib/main.dart:1297:11: Error: Superclass has no getter named 'key'.
+    super.key,
+          ^^^
+lib/main.dart:1296:9: Error: Not a constant expression.
+  const RecipesScreen({
+        ^^^^^^^^^^^^^
+lib/main.dart:1303:3: Error: '_RecipesScreenState' isn't a type.
+  _RecipesScreenState createState() => _RecipesScreenState();
+  ^^^^^^^^^^^^^^^^^^^
+lib/main.dart:1303:40: Error: The method '_RecipesScreenState' isn't defined for
+the type '_FridgePhotoScreenState'.
+ - '_FridgePhotoScreenState' is from 'package:test_app/main.dart'
+ ('lib/main.dart').
+Try correcting the name to the name of an existing method, or defining a method
+named '_RecipesScreenState'.
+  _RecipesScreenState createState() => _RecipesScreenState();
+                                       ^^^^^^^^^^^^^^^^^^^
+lib/main.dart:1307:8: Error: 'Recipe' isn't a type.
+  List<Recipe> _recipes = [];
+       ^^^^^^
+lib/main.dart:1313:5: Error: Local variable '_generateRecipesFromIngredients'
+can't be referenced before it is declared.
+    _generateRecipesFromIngredients();
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lib/main.dart:1316:16: Context: This is the declaration of the variable
+'_generateRecipesFromIngredients'.
+  Future<void> _generateRecipesFromIngredients() async {
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lib/main.dart:1466:30: Error: Local variable '_buildRecipeCard' can't be
+referenced before it is declared.
+                      return _buildRecipeCard(_recipes[index]);
+                             ^^^^^^^^^^^^^^^^
+lib/main.dart:1475:10: Context: This is the declaration of the variable
+'_buildRecipeCard'.
+  Widget _buildRecipeCard(Recipe recipe) {
+         ^^^^^^^^^^^^^^^^
+lib/main.dart:1475:27: Error: 'Recipe' isn't a type.
+  Widget _buildRecipeCard(Recipe recipe) {
+                          ^^^^^^
+lib/main.dart:1502:21: Error: Local variable '_getFoodColor' can't be referenced
+before it is declared.
+                    _getFoodColor(recipe.name),
+                    ^^^^^^^^^^^^^
+lib/main.dart:1649:9: Context: This is the declaration of the variable
+'_getFoodColor'.
+  Color _getFoodColor(String recipeName) {
+        ^^^^^^^^^^^^^
+lib/main.dart:1503:21: Error: Local variable '_getFoodColor' can't be referenced
+before it is declared.
+                    _getFoodColor(recipe.name).withOpacity(0.8),
+                    ^^^^^^^^^^^^^
+lib/main.dart:1649:9: Context: This is the declaration of the variable
+'_getFoodColor'.
+  Color _getFoodColor(String recipeName) {
+        ^^^^^^^^^^^^^
+lib/main.dart:1510:28: Error: Local variable '_getFoodColor' can't be referenced
+before it is declared.
+                    color: _getFoodColor(recipe.name).withOpacity(0.3),
+                           ^^^^^^^^^^^^^
+lib/main.dart:1649:9: Context: This is the declaration of the variable
+'_getFoodColor'.
+  Color _getFoodColor(String recipeName) {
+        ^^^^^^^^^^^^^
+lib/main.dart:1518:19: Error: Local variable '_getFoodEmoji' can't be referenced
+before it is declared.
+                  _getFoodEmoji(recipe.name),
+                  ^^^^^^^^^^^^^
+lib/main.dart:1664:10: Context: This is the declaration of the variable
+'_getFoodEmoji'.
+  String _getFoodEmoji(String recipeName) {
+         ^^^^^^^^^^^^^
+lib/main.dart:1587:34: Error: Local variable '_getDifficultyColor' can't be
+referenced before it is declared.
+                          color: _getDifficultyColor(recipe.difficulty),
+                                 ^^^^^^^^^^^^^^^^^^^
+lib/main.dart:1733:9: Context: This is the declaration of the variable
+'_getDifficultyColor'.
+  Color _getDifficultyColor(String difficulty) {
+        ^^^^^^^^^^^^^^^^^^^
+lib/main.dart:1603:38: Error: Local variable '_toggleSaveRecipe' can't be
+referenced before it is declared.
+                        onTap: () => _toggleSaveRecipe(recipe),
+                                     ^^^^^^^^^^^^^^^^^
+lib/main.dart:1746:16: Context: This is the declaration of the variable
+'_toggleSaveRecipe'.
+  Future<void> _toggleSaveRecipe(Recipe recipe) async {
+               ^^^^^^^^^^^^^^^^^
+lib/main.dart:1746:34: Error: 'Recipe' isn't a type.
+  Future<void> _toggleSaveRecipe(Recipe recipe) async {
+                                 ^^^^^^
+lib/main.dart:1621:40: Error: Local variable '_showRecipeDetails' can't be
+referenced before it is declared.
+                      onPressed: () => _showRecipeDetails(recipe),
+                                       ^^^^^^^^^^^^^^^^^^
+lib/main.dart:1764:8: Context: This is the declaration of the variable
+'_showRecipeDetails'.
+  void _showRecipeDetails(Recipe recipe) {
+       ^^^^^^^^^^^^^^^^^^
+lib/main.dart:1764:27: Error: 'Recipe' isn't a type.
+  void _showRecipeDetails(Recipe recipe) {
+                          ^^^^^^
+lib/main.dart:1313:5: Error: The method '_generateRecipesFromIngredients' isn't
+defined for the type '_FridgePhotoScreenState'.
+ - '_FridgePhotoScreenState' is from 'package:test_app/main.dart'
+ ('lib/main.dart').
+Try correcting the name to the name of an existing method, or defining a method
+named '_generateRecipesFromIngredients'.
+    _generateRecipesFromIngredients();
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lib/main.dart:1322:60: Error: The getter 'ingredients' isn't defined for the
+type 'FridgePhotoScreen'.
+ - 'FridgePhotoScreen' is from 'package:test_app/main.dart' ('lib/main.dart').
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'ingredients'.
+      print('Generating recipes with ingredients: ${widget.ingredients}');
+                                                           ^^^^^^^^^^^
+lib/main.dart:1325:29: Error: The getter 'RecipeGenerator' isn't defined for the
+type '_FridgePhotoScreenState'.
+ - '_FridgePhotoScreenState' is from 'package:test_app/main.dart'
+ ('lib/main.dart').
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'RecipeGenerator'.
+      final recipes = await RecipeGenerator.generateRecipesFromIngredients(
+                            ^^^^^^^^^^^^^^^
+lib/main.dart:1326:16: Error: The getter 'ingredients' isn't defined for the
+type 'FridgePhotoScreen'.
+ - 'FridgePhotoScreen' is from 'package:test_app/main.dart' ('lib/main.dart').
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'ingredients'.
+        widget.ingredients,
+               ^^^^^^^^^^^
+lib/main.dart:1338:20: Error: The getter 'RecipeGenerator' isn't defined for the
+type '_FridgePhotoScreenState'.
+ - '_FridgePhotoScreenState' is from 'package:test_app/main.dart'
+ ('lib/main.dart').
+Try correcting the name to the name of an existing getter, or defining a getter
+or field named 'RecipeGenerator'.
+        _recipes = RecipeGenerator._getFallbackRecipes();
+                   ^^^^^^^^^^^^^^^
+lib/main.dart:1362:13: Error: The method 'IngredientsConfirmationScreen' isn't
+defined for the type '_FridgePhotoScreenState'.
+ - '_FridgePhotoScreenState' is from 'package:test_app/main.dart'
+ ('lib/main.dart').
+Try correcting the name to the name of an existing method, or defining a method
+named 'IngredientsConfirmationScreen'.
+            IngredientsConfirmationScreen(cameras: widget.cameras),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lib/main.dart:1412:23: Error: The method 'SavedRecipesScreen' isn't defined for
+the type '_FridgePhotoScreenState'.
+ - '_FridgePhotoScreenState' is from 'package:test_app/main.dart'
+ ('lib/main.dart').
+Try correcting the name to the name of an existing method, or defining a method
+named 'SavedRecipesScreen'.
+                      SavedRecipesScreen(cameras: widget.cameras),
+                      ^^^^^^^^^^^^^^^^^^
+lib/main.dart:1466:30: Error: The method '_buildRecipeCard' isn't defined for
+the type '_FridgePhotoScreenState'.
+ - '_FridgePhotoScreenState' is from 'package:test_app/main.dart'
+ ('lib/main.dart').
+Try correcting the name to the name of an existing method, or defining a method
+named '_buildRecipeCard'.
+                      return _buildRecipeCard(_recipes[index]);
+                             ^^^^^^^^^^^^^^^^
+lib/main.dart:1502:21: Error: The method '_getFoodColor' isn't defined for the
+type '_FridgePhotoScreenState'.
+ - '_FridgePhotoScreenState' is from 'package:test_app/main.dart'
+ ('lib/main.dart').
+Try correcting the name to the name of an existing method, or defining a method
+named '_getFoodColor'.
+                    _getFoodColor(recipe.name),
+                    ^^^^^^^^^^^^^
+lib/main.dart:1503:21: Error: The method '_getFoodColor' isn't defined for the
+type '_FridgePhotoScreenState'.
+ - '_FridgePhotoScreenState' is from 'package:test_app/main.dart'
+ ('lib/main.dart').
+Try correcting the name to the name of an existing method, or defining a method
+named '_getFoodColor'.
+                    _getFoodColor(recipe.name).withOpacity(0.8),
+                    ^^^^^^^^^^^^^
+lib/main.dart:1510:28: Error: The method '_getFoodColor' isn't defined for the
+type '_FridgePhotoScreenState'.
+ - '_FridgePhotoScreenState' is from 'p
