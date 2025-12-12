@@ -1,4 +1,4 @@
-body: SafeArea(
+ body: SafeArea(
   child: SingleChildScrollView(
     child: Padding(
       padding: const EdgeInsets.all(24.0),
@@ -115,3 +115,37 @@ body: SafeArea(
     ),
   ),
 ),
+  }
+
+  Future<void> _takePicture() async {
+    // Show dialog to choose camera or gallery
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Choose Photo Source'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take Photo'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _pickImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Library'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _pickImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
