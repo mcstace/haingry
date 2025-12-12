@@ -2,46 +2,100 @@ body: SafeArea(
   child: Padding(
     padding: const EdgeInsets.all(24.0),
     child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,  // ← This centers everything!
-      crossAxisAlignment: CrossAxisAlignment.center,  // ← This too
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Logo at the very top (pull it up out of center)
-        Align(
-          alignment: Alignment.topCenter,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 60),
-            child: SizedBox(
-              height: 40,  // Make it smaller
-              child: Image.asset(
-                'assets/images/haingrypurple.png',
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Text(
-                    'haingry',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF7B68EE),
-                    ),
-                  );
-                },
-              ),
+        // Logo - positioned at top
+        Positioned(
+          top: 0,
+          child: SizedBox(
+            height: 40,
+            child: Image.asset(
+              'assets/images/haingrypurple.png',
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return const Text(
+                  'haingry',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF7B68EE),
+                    letterSpacing: -1,
+                  ),
+                );
+              },
             ),
           ),
         ),
         
+        const Spacer(),
+
         // Fridge Illustration
         Container(
           width: 220,
           height: 340,
-          // ... your fridge code
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.asset(
+              'assets/images/fridge.png',
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: 220,
+                  height: 340,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF7B68EE),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.image_not_supported, color: Colors.white, size: 60),
+                        SizedBox(height: 16),
+                        Text(
+                          'Add fridge.png to\nassets/images/ folder',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ),
         
         const SizedBox(height: 40),
         
         // Camera Button
         GestureDetector(
-          // ... your camera button code
+          onTap: _takePicture,
+          child: Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: const Color(0xFF7B68EE),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 4),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF7B68EE).withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.camera_alt,
+              color: Colors.white,
+              size: 40,
+            ),
+          ),
         ),
         
         const SizedBox(height: 24),
@@ -57,6 +111,8 @@ body: SafeArea(
           ),
           textAlign: TextAlign.center,
         ),
+        
+        const Spacer(),
       ],
     ),
   ),
