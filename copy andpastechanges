@@ -1,32 +1,9 @@
-// Fridge Photo Screen
-class FridgePhotoScreen extends StatefulWidget {
-  final List<CameraDescription> cameras;
-
-  const FridgePhotoScreen({super.key, required this.cameras});
-
-  @override
-  _FridgePhotoScreenState createState() => _FridgePhotoScreenState();
-}
-
-class _FridgePhotoScreenState extends State<FridgePhotoScreen> {
-  final ImagePicker _picker = ImagePicker();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      leading: IconButton(
-      icon: const Icon(Icons.arrow_back, color: Color(0xFF7B68EE)),
-      onPressed: () => Navigator.pop(context),
-),
-),
-      body: SafeArea(
+ody: SafeArea(
+      child: Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 10),
               // Logo
@@ -48,97 +25,3 @@ class _FridgePhotoScreenState extends State<FridgePhotoScreen> {
                   },
                 ),
               ),
-            
-            
-
-              const Spacer(),
-
-           // Fridge Illustration
-              Container(
-                width: 220,
-                height: 340,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.asset(
-                    'assets/images/fridge.png',
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 220,
-                        height: 340,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF7B68EE),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.image_not_supported, color: Colors.white, size: 60),
-                              SizedBox(height: 16),
-                              Text(
-                                'Add fridge.png to\nassets/images/ folder',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.white, fontSize: 16),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 40),
-              
-              // Camera Button
-              GestureDetector(
-                onTap: _takePicture,
-                child: Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF7B68EE),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 4),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF7B68EE).withOpacity(0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.camera_alt,
-                    color: Colors.white,
-                    size: 40,
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Title
-              const Text(
-                'Take a photo of\nyour fridge!',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                  height: 1.2,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              
-              const SizedBox(height: 40),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
